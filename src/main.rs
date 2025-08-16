@@ -11,6 +11,7 @@ mod vga_buffer;
 pub extern "C" fn _start() -> ! {
     println!("test");
 
+    panic!("Some message for the panic");
     loop {}
 }
 
