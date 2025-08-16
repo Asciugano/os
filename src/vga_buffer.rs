@@ -86,7 +86,7 @@ impl Writer {
             }
         }
         self.clear_row(BUFFER_HEIGHT - 1);
-        self.column_pos = 0;
+        self.column_pos = 1;
     }
 
     fn clear_row(&mut self, row: usize) {
@@ -133,7 +133,7 @@ impl fmt::Write for Writer {
 
 lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
-        column_pos: 0,
+        column_pos: 1,
         color_code: ColorCode::new(Color::Green, Color::Black),
         buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
     });
