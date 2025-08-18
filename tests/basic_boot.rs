@@ -1,3 +1,6 @@
+#![no_std]
+#![no_main]
+#![feature(custom_test_frameworks)]
 #![test_runner(os::test_runner)]
 
 use core::panic::PanicInfo;

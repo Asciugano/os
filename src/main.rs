@@ -11,11 +11,6 @@ use os::println;
 pub extern "C" fn _start() -> ! {
     println!("Hello World{}", "!");
 
-    println!("secondo test");
-
-    #[cfg(test)]
-    test_main();
-
     loop {}
 }
 
