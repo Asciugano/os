@@ -1,7 +1,6 @@
 #![no_std]
 #![no_main]
 #![feature(custom_test_frameworks)]
-#![feature(abi_x86_interrupt)]
 #![test_runner(os::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
@@ -13,6 +12,10 @@ pub extern "C" fn _start() -> ! {
     println!("Hello World{}", "!");
 
     os::init();
+
+    // unsafe {
+    //     *(0xdeadbeef as *mut u8) = 42;
+    // }
 
     #[cfg(test)]
     test_main();
