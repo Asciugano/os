@@ -8,7 +8,10 @@ use alloc::{boxed::Box, rc::Rc, vec, vec::Vec};
 use bootloader::{BootInfo, entry_point};
 use core::panic::PanicInfo;
 
-use os::println;
+use os::{
+    println,
+    task::{Task, simple_executor::SimpleExecutor},
+};
 
 extern crate alloc;
 
@@ -27,6 +30,10 @@ fn kernel_main(_boot_info: &'static BootInfo) -> ! {
     let mut frame_allocator = unsafe { BootInfoFrameAllocator::init(&_boot_info.memory_map) };
 
     allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap initialization failed");
+
+    let mut executor = SimpleExecutor::new();
+    executor.spawn(Task::new(example_task()));
+    executor.run();
 
     let page = Page::containing_address(VirtAddr::new(0xdeadbeaf000));
     memory::create_example_mapping(page, &mut mapper, &mut frame_allocator);
@@ -114,4 +121,13 @@ fn panic(_info: &PanicInfo) -> ! {
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     os::test_panic_handler(_info)
+}
+
+async fn async_number() -> u32 {
+    42
+}
+
+async fn example_task() {
+    let number = async_number().await;
+    println!("async number: {}", number);
 }
