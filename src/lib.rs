@@ -11,8 +11,11 @@ pub mod allocator;
 pub mod gdt;
 pub mod interrupts;
 pub mod memory;
+pub mod scheduler;
 pub mod serial;
+pub mod syscall;
 pub mod task;
+pub mod timer;
 pub mod vga_buffer;
 
 extern crate alloc;

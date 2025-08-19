@@ -80,12 +80,12 @@ fn kernel_main(_boot_info: &'static BootInfo) -> ! {
     #[cfg(test)]
     test_main();
 
+    println!("It did't crash");
+
     let mut executor = Executor::new();
     executor.spawn(Task::new(example_task()));
     executor.spawn(Task::new(keyboard::print_keypresses()));
     executor.run();
-
-    println!("It did't crash");
 
     os::hlt_loop();
 }
