@@ -10,7 +10,7 @@ use core::panic::PanicInfo;
 
 use os::{
     println,
-    task::{Task, simple_executor::SimpleExecutor},
+    task::{Task, keyboard, simple_executor::SimpleExecutor},
 };
 
 extern crate alloc;
@@ -30,10 +30,6 @@ fn kernel_main(_boot_info: &'static BootInfo) -> ! {
     let mut frame_allocator = unsafe { BootInfoFrameAllocator::init(&_boot_info.memory_map) };
 
     allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap initialization failed");
-
-    let mut executor = SimpleExecutor::new();
-    executor.spawn(Task::new(example_task()));
-    executor.run();
 
     let page = Page::containing_address(VirtAddr::new(0xdeadbeaf000));
     memory::create_example_mapping(page, &mut mapper, &mut frame_allocator);
@@ -82,6 +78,11 @@ fn kernel_main(_boot_info: &'static BootInfo) -> ! {
 
     #[cfg(test)]
     test_main();
+
+    let mut executor = SimpleExecutor::new();
+    executor.spawn(Task::new(example_task()));
+    executor.spawn(Task::new(keyboard::print_keypresses()));
+    executor.run();
 
     println!("It did't crash");
 
