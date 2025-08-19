@@ -4,15 +4,19 @@
 #![test_runner(os::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
+use alloc::{boxed::Box, rc::Rc, vec, vec::Vec};
 use bootloader::{BootInfo, entry_point};
 use core::panic::PanicInfo;
+
 use os::println;
+
+extern crate alloc;
 
 entry_point!(kernel_main);
 
 fn kernel_main(_boot_info: &'static BootInfo) -> ! {
-    use os::memory;
-    use os::memory::BootInfoFrameAllocator;
+    use os::allocator;
+    use os::memory::{self, BootInfoFrameAllocator};
     use x86_64::{VirtAddr, structures::paging::Page};
 
     println!("Hello World{}", "!");
@@ -22,11 +26,34 @@ fn kernel_main(_boot_info: &'static BootInfo) -> ! {
     let mut mapper = unsafe { memory::init(phys_mem_offset) };
     let mut frame_allocator = unsafe { BootInfoFrameAllocator::init(&_boot_info.memory_map) };
 
+    allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap initialization failed");
+
     let page = Page::containing_address(VirtAddr::new(0xdeadbeaf000));
     memory::create_example_mapping(page, &mut mapper, &mut frame_allocator);
 
     let page_ptr: *mut u64 = page.start_address().as_mut_ptr();
     unsafe { page_ptr.offset(400).write_volatile(0x_f021_f077_f065_f04e) }
+
+    let heap_value = Box::new(41);
+    println!("heap_value at {:p}", heap_value);
+
+    let mut vec = Vec::new();
+    for i in 0..500 {
+        vec.push(i);
+    }
+    println!("vec at {:p}", vec.as_slice());
+
+    let reference_cunted = Rc::new(vec![1, 2, 3]);
+    let cloned_refenrece = reference_cunted.clone();
+    println!(
+        "current reference unt is {}",
+        Rc::strong_count(&cloned_refenrece)
+    );
+    core::mem::drop(reference_cunted);
+    println!(
+        "rederence count is {} now",
+        Rc::strong_count(&cloned_refenrece)
+    );
 
     // let addresses = [
     //     // the identity-mapped vga buffer page

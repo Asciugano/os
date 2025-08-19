@@ -1,0 +1,67 @@
+#![no_std]
+#![no_main]
+#![feature(custom_test_frameworks)]
+#![test_runner(os::test_runner)]
+#![reexport_test_harness_main = "test_main"]
+
+extern crate alloc;
+
+use bootloader::{BootInfo, entry_point};
+use core::panic::PanicInfo;
+
+entry_point!(main);
+
+fn main(_boot_info: &'static BootInfo) -> ! {
+    use os::allocator;
+    use os::memory::{self, BootInfoFrameAllocator};
+    use x86_64::VirtAddr;
+
+    os::init();
+    let phys_mem_offset = VirtAddr::new(_boot_info.physical_memory_offset);
+    let mut mapper = unsafe { memory::init(phys_mem_offset) };
+    let mut frame_allocator = unsafe { BootInfoFrameAllocator::init(&_boot_info.memory_map) };
+    allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap initalization failed");
+
+    test_main();
+
+    loop {}
+}
+
+#[panic_handler]
+fn panic(_info: &PanicInfo) -> ! {
+    os::test_panic_handler(_info);
+}
+
+#[test_case]
+fn simple_allocation() {
+    use alloc::boxed::Box;
+
+    let heap_value_1 = Box::new(41);
+    let heap_value_2 = Box::new(13);
+    assert_eq!(*heap_value_1, 41);
+    assert_eq!(*heap_value_2, 13);
+}
+
+#[test_case]
+fn large_vec() {
+    use alloc::vec::Vec;
+
+    let n = 1000;
+    let mut vec = Vec::new();
+    for i in 0..n {
+        vec.push(i);
+    }
+
+    assert_eq!(vec.iter().sum::<u64>(), (n - 1) * n / 2);
+}
+
+#[test_case]
+fn many_boxes() {
+    use alloc::boxed::Box;
+    use os::allocator::HEAP_SIZE;
+
+    for i in 0..HEAP_SIZE {
+        let x = Box::new(i);
+        assert_eq!(*x, i);
+    }
+}
